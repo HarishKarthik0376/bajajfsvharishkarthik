@@ -1,0 +1,13 @@
+#response
+{
+    background-color: black;
+    color: white;
+    margin-top: 10px;
+}
+.main
+{
+    width: 10%;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}
