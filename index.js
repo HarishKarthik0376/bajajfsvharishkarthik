@@ -1,35 +1,45 @@
-async function processAndSendData()
-{
+async function processAndSendData() {
     const datainput = document.getElementById('data').value;
     const userId = document.getElementById('user_id').value;
     const email = document.getElementById('email').value;
     const rollNumber = document.getElementById('roll_number').value;
     const url = document.getElementById('url').value;
-    const dataarray = datainput.split(',').map(item=>item.trim().replace(/"/g,''));
-
-    const numbers = [];
-    const alphabets = [];
-
-    dataarray.forEach(item => {
-        if (!isNaN(item)) {
-            const number = parseInt(item, 10);
-            if (number) {
-                numbers.push(item);
-            }
-        } else if (/^[a-zA-Z]$/.test(item)) {
-            alphabets.push(item.toUpperCase());
-        }
-    });
-    const responseData = {
-        is_success: true,
-        user_id: userId,
-        email: email,
-        roll_number: rollNumber,
-        numbers: numbers,
-        alphabets: alphabets
-    };
-    console.log(responseData);
+    
     try {
+        const dataObj = JSON.parse(datainput); 
+        const dataarray = dataObj.data;
+
+        const numbers = [];
+        const alphabets = [];
+        let highestLowercase = null;
+
+        dataarray.forEach(item => {
+            if (!isNaN(item)) {
+                numbers.push(item);
+            } else if (/^[a-zA-Z]$/.test(item)) {
+                alphabets.push(item);
+                if (item === item.toLowerCase()) {
+                    if (!highestLowercase || item > highestLowercase) {
+                        highestLowercase = item;
+                    }
+                }
+            }
+        });
+
+        const highestLowercaseArray = highestLowercase ? [highestLowercase] : [];
+
+        const responseData = {
+            is_success: true,
+            user_id: userId,
+            email: email,
+            roll_number: rollNumber,
+            numbers: numbers,
+            alphabets: alphabets,
+            highest_lowercase_alphabet: highestLowercaseArray
+        };
+
+        console.log('Sending Data:', responseData);
+        
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -44,8 +54,21 @@ async function processAndSendData()
 
         const jsonResponse = await response.json();
 
-        document.getElementById('response').innerText = JSON.stringify(jsonResponse, null, 2);
+        const selectedOptions = Array.from(document.getElementById('selectOptions').selectedOptions).map(opt => opt.value);
+
+        const filteredResponse = {};
+        if (selectedOptions.includes("alphabets")) {
+            filteredResponse.alphabets = jsonResponse.alphabets;
+        }
+        if (selectedOptions.includes("numbers")) {
+            filteredResponse.numbers = jsonResponse.numbers;
+        }
+        if (selectedOptions.includes("highest_lowercase_alphabet")) {
+            filteredResponse.highest_lowercase_alphabet = jsonResponse.highest_lowercase_alphabet;
+        }
+
+        document.getElementById('response').innerText = JSON.stringify(filteredResponse, null, 2);
     } catch (error) {
-        document.getElementById('response').innerText = `Error: ${error.message}`;
+        document.getElementById('response').innerText = `Error: Invalid JSON format or API error - ${error.message}`;
     }
 }
